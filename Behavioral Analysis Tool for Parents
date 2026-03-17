@@ -1,1 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Behavioral Analysis App - Parent Tool</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 35px;
+      text-align: center;
+    }
+    .header h1 { font-size: 32px; margin-bottom: 10px; }
+    .header p { font-size: 16px; opacity: 0.95; }
+    .content { padding: 35px; }
+    .section { display: none; }
+    .section.active { display: block; animation: fadeIn 0.4s ease-in; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .form-group { margin-bottom: 25px; }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #333;
+      font-size: 15px;
+    }
+    select, input {
+      width: 100%;
+      padding: 14px;
+      border: 2px solid #e1e5e9;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+    select:focus, input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+    }
+    .category-header {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: white;
+      padding: 18px;
+      margin: 25px 0 15px 0;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 18px;
+      box-shadow: 0 4px 15px rgba(79,172,254,0.3);
+    }
+    .pattern-item {
+      background: #f8f9fa;
+      padding: 22px;
+      margin-bottom: 18px;
+      border-radius: 12px;
+      border-left: 5px solid #667eea;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      transition: all 0.3s;
+    }
+    .pattern-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+    .pattern-label {
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #2c3e50;
+      display: block;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+    .example-text {
+      font-size: 13px;
+      color: #5a6c7d;
+      font-style: italic;
+      margin: 8px 0;
+      padding: 12px;
+      background: linear-gradient(135deg, #f0f8ff 0%, #e3f2fd 100%);
+      border-radius: 8px;
+      border-left: 3px solid #2196f3;
+    }
+    .scale-container {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .scale-btn {
+      width: 48px;
+      height: 48px;
+      border: 2px solid #dee2e6;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: all 0.3s;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .scale-btn:hover {
+      border-color: #667eea;
+      color: #667eea;
+      transform: scale(1.05);
+    }
+    .scale-btn.selected {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: #5a67d8;
+      transform: scale(1.1);
+      box-shadow: 0 4px 15px rgba(102,126,234,0.4);
+    }
+    .scale-label {
+      font-size: 11px;
+      color: #6c757d;
+      margin-top: 4px;
+      text-align: center;
+      font-weight: 500;
+    }
+    .scale-legend {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #eee;
+      font-size: 13px;
+      color: #6c757d;
+      font-weight: 500;
+    }
+    .button-group {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 40px;
+    }
+    button {
+      padding: 15px 35px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      min-width: 140px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(102,126,234,0.4);
+    }
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #495057;
+      border: 2px solid #dee2e6;
+    }
+    .btn-secondary:hover {
+      background: #e9ecef;
+      border-color: #adb5bd;
+    }
+    .overall-progress {
+      height: 10px;
+      background: linear-gradient(90deg, #e9ecef 0%, #dee2e6 100%);
+      border-radius: 6px;
+      margin: 20px 0;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .overall-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.5s ease;
+      border-radius: 6px;
+      box-shadow: 0 0 20px rgba(102,126,234,0.5);
+      width: 0%;
+    }
+    .progress-text {
+      text-align: center;
+      margin-top: 8px;
+      font-weight: 600;
+      color: #495057;
+      font-size: 14px;
+    }
+    .report-section {
+      background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+      padding: 25px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      border-left: 5px solid #667eea;
+    }
+    .report-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .category-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 18px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      transition: all 0.3s;
+    }
+    .category-row:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(0,0,0,0.12);
+    }
+    .category-name {
+      font-weight: 700;
+      color: #2c3e50;
+      font-size: 16px;
+    }
+    .score-bar-small {
+      flex: 1;
+      margin: 0 20px;
+      height: 12px;
+      background: #e9ecef;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .score-fill-small {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.8s ease;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(102,126,234,0.4);
+      width: 0%;
+    }
+    .score-value {
+      font-weight: 800;
+      color: #667eea;
+      font-size: 18px;
+      min-width: 80px;
+      text-align: right;
+    }
+    @media (max-width: 768px) {
+      .header h1 { font-size: 24px; }
+      .content { padding: 20px; }
+      .button-group { flex-direction: column; }
+      button { width: 100%; }
+      .scale-btn { width: 40px; height: 40px; font-size: 12px; }
+      .scale-container { gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎯 Behavioral Analysis App</h1>
+      <p>Professional child development assessment • 4 age groups • 7 parameters • actionable report</p>
+    </div>
+    <div class="content">
+      <!-- Step 1 -->
+      <div id="step1" class="section active">
+        <div class="form-group">
+          <label>👶 Child's age group:</label>
+          <select id="ageGroup" onchange="moveToStep2()">
+            <option value="">Choose age group…</option>
+            <option value="2-5">2–5 years (Toddler & Preschool)</option>
+            <option value="6-10">6–10 years (Primary School)</option>
+            <option value="11-15">11–15 years (Early Teen)</option>
+            <option value="16-18">16–18 years (Late Teen)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div id="step2" class="section">
+        <div class="form-group">
+          <label>👤 Child's full name:</label>
+          <input id="childName" type="text" placeholder="Enter full name" />
+        </div>
+        <div class="form-group">
+          <label>📅 Assessment date:</label>
+          <input id="assessmentDate" type="date" />
+          <small style="color:#666;">Today's date auto-filled</small>
+        </div>
+        <div class="button-group">
+          <button class="btn-secondary" onclick="moveToStep1()">← Back</button>
+          <button class="btn-primary" onclick="moveToStep3()">Begin assessment →</button>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div id="step3" class="section">
+        <h3 id="ageGroupTitle" style="color:#2c3e50; margin-bottom: 10px; font-size: 22px;"></h3>
+        <div class="overall-progress">
+          <div id="overallProgress" class="overall-progress-fill"></div>
+        </div>
+        <div id="progressText" class="progress-text">0 patterns completed</div>
+        <p style="font-size: 13px; color:#555; margin-bottom:10px;">
+          Rate each pattern on a 0–5 scale:
+          <strong>0 = Never, 1 = Rarely, 2 = Sometimes, 3 = Often, 4 = Very Often, 5 = Always</strong>
+        </p>
+        <div id="patternsContainer"></div>
+        <div class="button-group">
+          <button class="btn-secondary" onclick="moveToStep2()">← Back</button>
+          <button id="reportBtn" class="btn-primary" onclick="generateReport()" disabled>Generate report →</button>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div id="step4" class="section">
+        <div id="reportContainer"></div>
+        <div class="button-group">
+          <button class="btn-secondary" onclick="moveToStep1()">New assessment</button>
+          <button class="btn-primary" onclick="window.print()">🖨️ Print report</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const behaviorData = {
+      "2-5": {
+        name: "2–5 years • Toddler & Preschool",
+        categories: {
+          "🧡 Emotional Regulation": [
+            { pattern: "Stays calm when told 'No'", example: "Accepts no more screen time without a big tantrum." },
+            { pattern: "Recovers from disappointment", example: "Settles within 5–10 minutes after losing a toy/game." },
+            { pattern: "Manages frustration", example: "Waits for a turn in games without hitting or screaming." },
+            { pattern: "Calms down with comfort", example: "Hugs you and slows crying when upset." },
+            { pattern: "Handles small changes in routine", example: "Accepts change from park to home with brief protest." },
+            { pattern: "Tolerates short waiting", example: "Waits 2–3 minutes for snack or toy." },
+          ],
+          "💙 Social Skills": [
+            { pattern: "Shares toys with others", example: "Lets another child use blocks or cars." },
+            { pattern: "Invites others to play", example: "Says 'Come play with me' to siblings or friends." },
+            { pattern: "Greets familiar people", example: "Waves or says hi to neighbours or teachers." },
+            { pattern: "Uses simple manners", example: "Says please/thank you with reminders." },
+            { pattern: "Plays near/with peers", example: "Builds or pretends together for a few minutes." },
+            { pattern: "Apologises with support", example: "Says sorry after being guided." },
+          ],
+          "🧠 Cognitive Development": [
+            { pattern: "Follows 1–2 step instructions", example: "Puts toy in box, then closes lid when asked." },
+            { pattern: "Names common objects", example: "Identifies ball, car, dog, tree, etc." },
+            { pattern: "Recognises basic colours", example: "Points to red/blue/yellow correctly." },
+            { pattern: "Counts small sets", example: "Counts 3–5 objects correctly." },
+            { pattern: "Remembers simple routines", example: "Knows that bath comes after dinner." },
+            { pattern: "Shows curiosity", example: "Asks 'What is that?' about new objects." },
+          ],
+          "🗣️ Self-Expression (Communication)": [
+            { pattern: "Uses words instead of only crying", example: "Says 'I want juice' instead of only crying." },
+            { pattern: "Names own feelings", example: "Says 'I am happy/sad/angry'." },
+            { pattern: "Expresses likes and dislikes", example: "Says 'I like cars' or 'I don't like this food'." },
+            { pattern: "Asks simple questions", example: "Says 'Where is mama?' or 'What is that?'." },
+            { pattern: "Attempts short stories", example: "Describes small events like going to the park." },
+            { pattern: "Uses simple polite words", example: "Says please, thank you, sorry sometimes." },
+          ],
+          "📋 Behavioral Patterns (Habits/Routines)": [
+            { pattern: "Follows basic daily routine", example: "Brushes teeth after waking with some help." },
+            { pattern: "Helps with tiny chores", example: "Puts toys in a basket when asked." },
+            { pattern: "Sits for meals", example: "Stays at the table for most of mealtime." },
+            { pattern: "Cleans up after play", example: "Puts at least some toys away." },
+            { pattern: "Uses toilet or training", example: "Tells adult before/after using toilet." },
+            { pattern: "Sleeps through most nights", example: "Does not wake frequently or demand screens." },
+          ],
+          "💛 Emotional Intelligence": [
+            { pattern: "Notices when others are sad", example: "Looks concerned when sibling/parent is crying." },
+            { pattern: "Shows basic empathy", example: "Offers hug or toy to upset person." },
+            { pattern: "Enjoys praise", example: "Smiles and repeats action when praised." },
+            { pattern: "Shows clear joy", example: "Jumps/claps when excited by an activity." },
+            { pattern: "Can say when scared", example: "Says 'I'm scared of dark/animal'." },
+          ],
+          "👨‍👩‍👧 Attachment": [
+            { pattern: "Seeks comfort from caregiver", example: "Comes to you when hurt or scared." },
+            { pattern: "Separates with brief upset", example: "Cries briefly at preschool then settles." },
+            { pattern: "Checks back while playing", example: "Looks at you or returns to you during play." },
+          ],
+        },
+      },
+      "6-10": {
+        name: "6–10 years • Primary School",
+        categories: {
+          "🧡 Emotional Regulation": [
+            { pattern: "Handles losing in games", example: "Accepts defeat without long sulking or outburst." },
+            { pattern: "Controls anger with words", example: "Says 'I'm upset' instead of hitting or throwing." },
+            { pattern: "Recovers from criticism", example: "Improves work after teacher/parent feedback." },
+            { pattern: "Manages homework stress", example: "Does work with mild worry but no meltdown." },
+            { pattern: "Accepts 'No' for screen time", example: "Does not argue for a long time." },
+          ],
+          "💙 Social Skills": [
+            { pattern: "Makes and keeps friends", example: "Has at least 1–2 regular friends." },
+            { pattern: "Shares and takes turns", example: "Follows rules in team games." },
+            { pattern: "Resolves small conflicts", example: "Talks it out or asks for help, not fights." },
+            { pattern: "Respects personal space", example: "Does not push or stand too close usually." },
+            { pattern: "Shows sportsmanship", example: "Congratulates winner, even if not self." },
+          ],
+          "🧠 Cognitive Development": [
+            { pattern: "Stays focused on tasks", example: "Can work 15–20 minutes on homework." },
+            { pattern: "Plans simple tasks", example: "Organises school bag the night before." },
+            { pattern: "Solves age-appropriate problems", example: "Uses reasoning in maths or puzzles." },
+            { pattern: "Asks thoughtful questions", example: "Shows curiosity about how/why things work." },
+            { pattern: "Remembers instructions", example: "Follows 2–3 step directions reliably." },
+          ],
+          "🗣️ Self-Expression (Communication)": [
+            { pattern: "Explains events clearly", example: "Can describe what happened at school." },
+            { pattern: "Expresses opinions respectfully", example: "Says 'I think…' without shouting." },
+            { pattern: "Asks for help when needed", example: "Approaches teacher/parent before getting stuck." },
+            { pattern: "Understands simple humour", example: "Laughs appropriately at basic jokes." },
+            { pattern: "Participates in discussions", example: "Answers questions or shares ideas." },
+          ],
+          "📋 Behavioral Patterns": [
+            { pattern: "Follows daily school routine", example: "Gets ready with minimal reminders." },
+            { pattern: "Completes homework on time", example: "Usually finishes before deadline." },
+            { pattern: "Takes care of belongings", example: "Rarely loses stationery or books." },
+            { pattern: "Follows screen-time rules", example: "Stops when time is over." },
+            { pattern: "Helps with simple chores", example: "Sets table, cleans room with guidance." },
+          ],
+          "💛 Emotional Intelligence": [
+            { pattern: "Recognises others' feelings", example: "Notices when friend is lonely or upset." },
+            { pattern: "Shows empathy in words", example: "Says 'Are you OK?' or offers to help." },
+            { pattern: "Admits mistakes", example: "Can apologise without extreme shame." },
+            { pattern: "Handles praise/modesty", example: "Feels proud but not arrogant." },
+            { pattern: "Understands fairness", example: "Comments when something is unfair to others." },
+          ],
+          "👨‍👩‍👧 Attachment": [
+            { pattern: "Talks openly with parents", example: "Shares school or friend issues at home." },
+            { pattern: "Accepts guidance", example: "Listens to advice even if not fully happy." },
+            { pattern: "Seeks support when worried", example: "Comes to caregiver during strong worries." },
+          ],
+        },
+      },
+      "11-15": {
+        name: "11–15 years • Early Teen",
+        categories: {
+          "🧡 Emotional Regulation": [
+            { pattern: "Manages mood swings", example: "Irritation passes without shouting at everyone." },
+            { pattern: "Controls impulses", example: "Thinks before reacting on social media or in class." },
+            { pattern: "Handles academic pressure", example: "Feels stressed but continues studying." },
+            { pattern: "Accepts boundaries", example: "Respects rules about outings, phone, night-time." },
+            { pattern: "Reflects after conflicts", example: "Later understands own role in argument." },
+          ],
+          "💙 Social Skills": [
+            { pattern: "Maintains close friendships", example: "Has 1–3 close friends with regular contact." },
+            { pattern: "Respects differences", example: "Does not mock others for looks/background." },
+            { pattern: "Handles peer pressure", example: "Can say no to unsafe/unfair requests." },
+            { pattern: "Communicates in groups", example: "Speaks and listens in group discussions." },
+            { pattern: "Resolves conflicts more maturely", example: "Uses talk, messages, or mediator instead of fight." },
+          ],
+          "🧠 Cognitive Development": [
+            { pattern: "Thinks about consequences", example: "Considers results before decisions." },
+            { pattern: "Sets simple goals", example: "Plans study for tests over few days." },
+            { pattern: "Handles increasing workload", example: "Balances school, hobbies, homework." },
+            { pattern: "Shows abstract thinking", example: "Understands ideas like justice, future, values." },
+            { pattern: "Organises time", example: "Uses timetable or planner somewhat reliably." },
+          ],
+          "🗣️ Self-Expression (Communication)": [
+            { pattern: "Expresses complex feelings", example: "Can say 'I feel left out / anxious / angry'." },
+            { pattern: "Discusses disagreements respectfully", example: "Can debate without insult." },
+            { pattern: "Shares personal views", example: "Talks about interests, beliefs, goals." },
+            { pattern: "Uses digital communication fairly", example: "Texts/posts mostly respectful." },
+            { pattern: "Can ask for privacy", example: "Says 'I need some space' without aggression." },
+          ],
+          "📋 Behavioral Patterns": [
+            { pattern: "Follows school and home rules", example: "Rarely in trouble for repeated rule-breaking." },
+            { pattern: "Completes assignments mostly on time", example: "Only occasional last-minute rush." },
+            { pattern: "Takes basic care of health", example: "Bathing, brushing, basic hygiene." },
+            { pattern: "Balances screens and offline life", example: "Has time for studies, hobbies, family." },
+            { pattern: "Shows responsibility", example: "Remembers important dates, homework, deadlines." },
+          ],
+          "💛 Emotional Intelligence": [
+            { pattern: "Understands others' perspectives", example: "Can explain why friend/parent might feel upset." },
+            { pattern: "Shows empathy in actions", example: "Supports a struggling classmate." },
+            { pattern: "Manages jealousy/comparison", example: "Does not constantly put self or others down." },
+            { pattern: "Accepts feedback", example: "Listens to teachers/parents without always arguing." },
+            { pattern: "Thinks about right vs wrong", example: "Asks if something is ethical or fair." },
+          ],
+          "👨‍👩‍👧 Attachment": [
+            { pattern: "Keeps some communication with parents", example: "Shares at least important events." },
+            { pattern: "Seeks guidance in big decisions", example: "Talks before choosing subjects/activities." },
+            { pattern: "Maintains trust", example: "Generally honest about where/with whom they are." },
+          ],
+        },
+      },
+      "16-18": {
+        name: "16–18 years • Late Teen",
+        categories: {
+          "🧡 Emotional Regulation": [
+            { pattern: "Manages strong emotions", example: "Uses healthy coping (music, walk, talk) instead of aggression." },
+            { pattern: "Handles uncertainty about future", example: "Anxious but still planning and acting." },
+            { pattern: "Balances independence and rules", example: "Negotiates rather than breaking every rule." },
+            { pattern: "Recovers from setbacks", example: "Fails test/try-out but tries again." },
+          ],
+          "💙 Social Skills": [
+            { pattern: "Maintains healthy friendships", example: "Avoids toxic/abusive peer relationships." },
+            { pattern: "Communicates boundaries", example: "Can say no to things they are not comfortable with." },
+            { pattern: "Shows respect in relationships", example: "Treats friends/partners with respect." },
+            { pattern: "Engages in group work", example: "Can collaborate on projects fairly." },
+          ],
+          "🧠 Cognitive Development": [
+            { pattern: "Plans for future paths", example: "Thinks about courses, career, or skills." },
+            { pattern: "Makes considered decisions", example: "Weighs pros and cons before big choices." },
+            { pattern: "Takes ownership of studies", example: "Studies without constant reminders." },
+            { pattern: "Understands complex issues", example: "Thinks about news, society, ethics maturely." },
+          ],
+          "🗣️ Self-Expression (Communication)": [
+            { pattern: "Expresses identity respectfully", example: "Shares views on values/career without attacking others." },
+            { pattern: "Handles disagreements like an adult", example: "Uses calm talk, not shouting or silent treatment." },
+            { pattern: "Asks for help with mental load", example: "Says when overwhelmed instead of shutting down." },
+            { pattern: "Can talk about sensitive topics", example: "Discusses stress, relationships, mistakes when safe." },
+          ],
+          "📋 Behavioral Patterns": [
+            { pattern: "Manages daily schedule", example: "Balances school/college, rest, and hobbies." },
+            { pattern: "Meets most responsibilities", example: "Deadlines, chores, basic finance if applicable." },
+            { pattern: "Follows safety rules", example: "Avoids drunk driving, unsafe travel, etc." },
+            { pattern: "Prepares for next stage", example: "Fills forms, prepares for exams, builds skills." },
+          ],
+          "💛 Emotional Intelligence": [
+            { pattern: "Understands complex emotions", example: "Recognises anxiety, guilt, shame, love, etc." },
+            { pattern: "Shows empathy beyond family", example: "Cares about community or social issues." },
+            { pattern: "Reflects on self", example: "Thinks about strengths, weaknesses, patterns." },
+            { pattern: "Handles guilt/repair", example: "Tries to fix harm done to others." },
+          ],
+          "👨‍👩‍👧 Attachment": [
+            { pattern: "Maintains connection with family", example: "Shares key updates even while independent." },
+            { pattern: "Accepts some parental limits", example: "Negotiates curfew/decisions, not constant war." },
+            { pattern: "Seeks support in crises", example: "Reaches out to trusted adults when really stuck." },
+          ],
+        },
+      },
+    };
+
+    let assessmentData = {
+      ageGroup: "",
+      childName: "",
+      assessmentDate: new Date().toISOString().split("T")[0],
+      scores: {},
+    };
+    let indexToCategory = {};
+
+    function showSection(id) {
+      document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+
+    function moveToStep1() {
+      assessmentData = {
+        ageGroup: "",
+        childName: "",
+        assessmentDate: new Date().toISOString().split("T")[0],
+        scores: {},
+      };
+      indexToCategory = {};
+      document.getElementById("ageGroup").value = "";
+      document.getElementById("childName").value = "";
+      document.getElementById("assessmentDate").valueAsDate = new Date();
+      showSection("step1");
+    }
+
+    function moveToStep2() {
+      const ageGroup = document.getElementById("ageGroup").value;
+      if (!ageGroup) {
+        alert("Please select an age group.");
+        return;
+      }
+      assessmentData.ageGroup = ageGroup;
+      document.getElementById("assessmentDate").valueAsDate = new Date();
+      showSection("step2");
+    }
+
+    function moveToStep3() {
+      assessmentData.childName =
+        document.getElementById("childName").value.trim() || "Child";
+      assessmentData.assessmentDate =
+        document.getElementById("assessmentDate").value ||
+        new Date().toISOString().split("T")[0];
+
+      const data = behaviorData[assessmentData.ageGroup];
+      if (!data) {
+        alert("Questions for this age group are not configured.");
+        return;
+      }
+
+      let html = "";
+      let globalIndex = 0;
+      indexToCategory = {};
+
+      for (const [catName, patterns] of Object.entries(data.categories)) {
+        html += `<div class="category-header">${catName}</div>`;
+        patterns.forEach((item) => {
+          indexToCategory[globalIndex] = catName;
+          html += `
+            <div class="pattern-item">
+              <label class="pattern-label">${globalIndex + 1}. ${item.pattern}</label>
+              <div class="example-text">📝 Example: ${item.example}</div>
+              <div class="scale-container">
+                ${[0,1,2,3,4,5].map((scale) => `
+                  <div>
+                    <button
+                      class="scale-btn"
+                      onclick="setScore(${globalIndex}, ${scale})"
+                      id="scale-${globalIndex}-${scale}"
+                    >${scale}</button>
+                    <div class="scale-label">${["Never","Rarely","Sometimes","Often","V. Often","Always"][scale]}</div>
+                  </div>
+                `).join("")}
+              </div>
+              <div class="scale-legend">
+                <span>0 = Never observed</span>
+                <span>5 = Always observed</span>
+              </div>
+            </div>
+          `;
+          globalIndex++;
+        });
+      }
+
+      document.getElementById("patternsContainer").innerHTML = html;
+      const total = globalIndex;
+      document.getElementById("ageGroupTitle").textContent =
+        `${data.name} • ${total} patterns`;
+      document.getElementById("overallProgress").style.width = "0%";
+      document.getElementById("progressText").textContent =
+        `0 of ${total} patterns completed`;
+      document.getElementById("reportBtn").disabled = true;
+      showSection("step3");
+    }
+
+    function setScore(index, score) {
+      assessmentData.scores[index] = score;
+
+      for (let s = 0; s <= 5; s++) {
+        const btn = document.getElementById(`scale-${index}-${s}`);
+        if (btn) btn.classList.remove("selected");
+      }
+      const selected = document.getElementById(`scale-${index}-${score}`);
+      if (selected) selected.classList.add("selected");
+
+      const total = Object.keys(indexToCategory).length;
+      const completed = Object.keys(assessmentData.scores).length;
+      const pct = ((completed / total) * 100).toFixed(0);
+      document.getElementById("overallProgress").style.width = pct + "%";
+      document.getElementById("progressText").textContent =
+        `${completed} of ${total} patterns completed`;
+
+      if (completed === total) {
+        const btn = document.getElementById("reportBtn");
+        btn.disabled = false;
+        btn.textContent = "✅ Generate full report →";
+      }
+    }
+
+    function generateReport() {
+      const scores = assessmentData.scores;
+      const indices = Object.keys(scores).map((k) => parseInt(k, 10));
+      if (!indices.length) {
+        alert("Please rate at least one pattern.");
+        return;
+      }
+
+      let totalScore = 0;
+      indices.forEach((i) => (totalScore += scores[i]));
+      const avg = (totalScore / indices.length).toFixed(1);
+      const pct = ((avg / 5) * 100).toFixed(1);
+
+      const catAgg = {};
+      for (const [idxStr, cat] of Object.entries(indexToCategory)) {
+        const idx = parseInt(idxStr, 10);
+        if (!(cat in catAgg)) catAgg[cat] = { sum: 0, count: 0 };
+        if (scores[idx] !== undefined) {
+          catAgg[cat].sum += scores[idx];
+          catAgg[cat].count += 1;
+        }
+      }
+
+      const strengths = [];
+      const monitor = [];
+      const improve = [];
+
+      const suggestionText = {
+        "🧡 Emotional Regulation": [
+          "Name feelings out loud for your child (e.g., 'You look upset because playtime ended').",
+          "Practise short calm‑down routines (deep breaths, counting to 10, hug/cuddle time).",
+          "Keep routines predictable so big emotions are easier to handle."
+        ],
+        "💙 Social Skills": [
+          "Arrange short, supervised playtimes or group activities with peers.",
+          "Role‑play sharing, taking turns, and saying sorry at home.",
+          "Praise specific positive social behaviours (e.g., 'I liked how you waited for your turn')."
+        ],
+        "🧠 Cognitive Development": [
+          "Use age‑appropriate puzzles, board games, and problem‑solving activities.",
+          "Ask open questions like 'How could we fix this?' instead of giving solutions immediately.",
+          "Create a quiet, distraction‑free time for homework or focused play."
+        ],
+        "🗣️ Self-Expression (Communication)": [
+          "Encourage your child to talk about their day with 'What was the best/worst part?' questions.",
+          "Model clear, respectful communication in the family.",
+          "Provide safe chances to share opinions, even if you disagree."
+        ],
+        "📋 Behavioral Patterns": [
+          "Use simple visual routines (charts for morning, homework, bedtime).",
+          "Be consistent with rules about sleep, homework, and screens.",
+          "Break big tasks into small steps and praise completion."
+        ],
+        "💛 Emotional Intelligence": [
+          "Talk about characters’ feelings in stories, movies, or daily life.",
+          "Ask 'How do you think they felt?' to build perspective‑taking.",
+          "Share your own feelings in a calm way to model healthy expression."
+        ],
+        "👨‍👩‍👧 Attachment": [
+          "Spend regular one‑to‑one time (even 10–15 minutes) with full attention.",
+          "Listen without judging when your child talks about worries or mistakes.",
+          "Offer comfort and predictability so your child feels safe to come to you."
+        ]
+      };
+
+      const orderedCategories = Object.keys(
+        behaviorData[assessmentData.ageGroup].categories
+      );
+
+      const perCategoryResults = orderedCategories.map((catName) => {
+        const agg = catAgg[catName] || { sum: 0, count: 0 };
+        const cAvg = agg.count ? (agg.sum / agg.count).toFixed(1) : "0.0";
+        const cNum = parseFloat(cAvg);
+        let tag = "";
+        if (cNum >= 4.0) {
+          tag = "Strength";
+          strengths.push(catName);
+        } else if (cNum >= 3.0) {
+          tag = "Doing okay / Monitor";
+          monitor.push(catName);
+        } else {
+          tag = "Needs improvement";
+          improve.push(catName);
+        }
+        const cPct = agg.count ? Math.round((cNum / 5) * 100) : 0;
+        return { catName, cAvg, cNum, cPct, tag };
+      });
+
+      let overallSummary = "";
+      if (avg >= 4.0) {
+        overallSummary =
+          "Overall pattern is strong. Continue current parenting approach, while fine‑tuning a few areas.";
+      } else if (avg >= 3.0) {
+        overallSummary =
+          "Overall development is generally on track, with some clear areas where extra support will help.";
+      } else {
+        overallSummary =
+          "Overall pattern suggests your child would benefit from consistent support and possibly professional guidance.";
+      }
+
+      let reportHTML = `
+        <div class="report-section">
+          <div class="report-title">📋 Behavioural Assessment Report</div>
+          <p><strong>Child:</strong> ${assessmentData.childName}</p>
+          <p><strong>Age group:</strong> ${behaviorData[assessmentData.ageGroup].name}</p>
+          <p><strong>Date:</strong> ${new Date(assessmentData.assessmentDate).toLocaleDateString()}</p>
+          <p style="margin-top:8px;">
+            <strong>Overall score:</strong> ${avg}/5.0 (${pct}%)
+          </p>
+          <p style="margin-top:8px;">${overallSummary}</p>
+        </div>
+      `;
+
+      reportHTML += `
+        <div class="report-section">
+          <div class="report-title">📊 Category scores (7 parameters)</div>
+      `;
+
+      perCategoryResults.forEach(({ catName, cAvg, cPct, tag }) => {
+        const color =
+          tag === "Strength"
+            ? "#27ae60"
+            : tag === "Doing okay / Monitor"
+            ? "#f39c12"
+            : "#e74c3c";
+        reportHTML += `
+          <div class="category-row">
+            <span class="category-name" style="color:${color};">
+              ${catName} &nbsp; <span style="font-size:12px;">(${tag})</span>
+            </span>
+            <div class="score-bar-small">
+              <div class="score-fill-small" style="width:${cPct}%;"></div>
+            </div>
+            <span class="score-value" style="color:${color};">${cAvg}/5</span>
+          </div>
+        `;
+      });
+
+      reportHTML += `</div>`;
+
+      reportHTML += `
+        <div class="report-section">
+          <div class="report-title">🎯 Priority focus areas for parents</div>
+      `;
+
+      if (improve.length === 0) {
+        reportHTML += `
+          <p>There are no parameters in the “Needs improvement” range. You can continue to support your child by maintaining current routines and monitoring changes over time.</p>
+        `;
+      } else {
+        reportHTML += `
+          <p>The following parameters scored below 3.0/5 and are good starting points for focused support:</p>
+        `;
+        improve.forEach((catName) => {
+          const actions = suggestionText[catName] || [];
+          reportHTML += `
+            <div style="margin-top:12px; padding:10px; background:#fff; border-radius:8px;">
+              <strong>${catName}</strong>
+              <ul style="margin-left:18px; font-size:14px; line-height:1.6; margin-top:6px;">
+                ${
+                  actions.length
+                    ? actions.map((a) => `<li>${a}</li>`).join("")
+                    : "<li>Spend a few minutes each day noticing and praising small positive behaviours in this area.</li>"
+                }
+              </ul>
+            </div>
+          `;
+        });
+      }
+
+      reportHTML += `</div>`;
+
+      reportHTML += `
+        <div class="report-section">
+          <div class="report-title">💚 Strengths to maintain</div>
+      `;
+
+      if (strengths.length === 0) {
+        reportHTML += `<p>No parameter is strongly above 4.0/5 yet. That is okay – focus on building consistency and small daily improvements.</p>`;
+      } else {
+        reportHTML += `
+          <p>These parameters are current strengths (≥ 4.0/5). Keep reinforcing them through praise and opportunities to practise:</p>
+          <ul style="margin-left:18px; font-size:14px; line-height:1.6;">
+            ${strengths.map((c) => `<li>${c}</li>`).join("")}
+          </ul>
+        `;
+      }
+
+      if (monitor.length > 0) {
+        reportHTML += `
+          <p style="margin-top:10px;">
+            The following parameters are in a healthy but “monitor” range (3.0–3.9/5):<br>
+            <em>${monitor.join(", ")}</em><br>
+            Keep an eye on these; they can become strengths with regular support.
+          </p>
+        `;
+      }
+
+      reportHTML += `</div>`;
+
+      document.getElementById("reportContainer").innerHTML = reportHTML;
+      showSection("step4");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const d = document.getElementById("assessmentDate");
+      if (d) d.valueAsDate = new Date();
+    });
+  </script>
+</body>
+</html>
 
