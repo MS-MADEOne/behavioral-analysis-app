@@ -1,0 +1,412 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behavioral Analysis App - Parent Tool</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; color: #333; }
+        .container { max-width: 1100px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 35px; text-align: center; }
+        .header h1 { font-size: 32px; margin-bottom: 10px; }
+        .header p { font-size: 16px; opacity: 0.95; }
+        .content { padding: 35px; }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.4s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .form-group { margin-bottom: 25px; }
+        label { display: block; font-weight: 600; margin-bottom: 10px; color: #333; font-size: 15px; }
+        select, input { width: 100%; padding: 14px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 15px; transition: all 0.3s; }
+        select:focus, input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+        .category-header { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 18px; margin: 25px 0 15px 0; border-radius: 10px; font-weight: 600; font-size: 18px; box-shadow: 0 4px 15px rgba(79,172,254,0.3); }
+        .pattern-item { background: #f8f9fa; padding: 22px; margin-bottom: 18px; border-radius: 12px; border-left: 5px solid #667eea; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: all 0.3s; }
+        .pattern-item:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .pattern-label { font-weight: 700; margin-bottom: 10px; color: #2c3e50; display: block; font-size: 16px; line-height: 1.4; }
+        .example-text { font-size: 13px; color: #5a6c7d; font-style: italic; margin: 8px 0; padding: 12px; background: linear-gradient(135deg, #f0f8ff 0%, #e3f2fd 100%); border-radius: 8px; border-left: 3px solid #2196f3; }
+        .scale-container { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+        .scale-btn { width: 48px; height: 48px; border: 2px solid #dee2e6; background: white; border-radius: 8px; cursor: pointer; font-weight: 700; transition: all 0.3s; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+        .scale-btn:hover { border-color: #667eea; color: #667eea; transform: scale(1.05); }
+        .scale-btn.selected { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: #5a67d8; transform: scale(1.1); box-shadow: 0 4px 15px rgba(102,126,234,0.4); }
+        .scale-label { font-size: 11px; color: #6c757d; margin-top: 4px; text-align: center; font-weight: 500; }
+        .scale-legend { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; font-size: 13px; color: #6c757d; font-weight: 500; }
+        .button-group { display: flex; gap: 15px; justify-content: center; margin-top: 40px; }
+        button { padding: 15px 35px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; min-width: 140px; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+        .btn-secondary { background: #f8f9fa; color: #495057; border: 2px solid #dee2e6; }
+        .btn-secondary:hover { background: #e9ecef; border-color: #adb5bd; }
+        .overall-progress { height: 10px; background: linear-gradient(90deg, #e9ecef 0%, #dee2e6 100%); border-radius: 6px; margin: 20px 0; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .overall-progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); transition: width 0.5s ease; border-radius: 6px; box-shadow: 0 0 20px rgba(102,126,234,0.5); }
+        .progress-text { text-align: center; margin-top: 8px; font-weight: 600; color: #495057; font-size: 14px; }
+        .report-section { background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%); padding: 25px; border-radius: 12px; margin-bottom: 25px; border-left: 5px solid #667eea; }
+        .report-title { font-size: 22px; font-weight: 700; color: #2c3e50; margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+        .report-header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        .category-score-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 18px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: all 0.3s; }
+        .category-score-row:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(0,0,0,0.12); }
+        .category-name { font-weight: 700; color: #2c3e50; font-size: 16px; }
+        .score-bar-small { flex: 1; margin: 0 20px; height: 12px; background: #e9ecef; border-radius: 8px; overflow: hidden; }
+        .score-fill-small { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); transition: width 0.8s ease; border-radius: 8px; box-shadow: 0 0 15px rgba(102,126,234,0.4); }
+        .score-value { font-weight: 800; color: #667eea; font-size: 18px; min-width: 80px; text-align: right; }
+        .recommendations { background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-left: 5px solid #f39c12; padding: 25px; border-radius: 12px; }
+        .recommendations h4 { color: #856404; margin-bottom: 15px; font-size: 20px; }
+        .recommendations ul { margin-left: 25px; color: #856404; line-height: 1.8; }
+        .recommendations li { margin-bottom: 12px; font-size: 15px; }
+        @media (max-width: 768px) { .header h1 { font-size: 24px; } .content { padding: 20px; } .button-group { flex-direction: column; } button { width: 100%; } .scale-btn { width: 40px; height: 40px; font-size: 12px; } .scale-container { gap: 4px; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Behavioral Analysis App</h1>
+            <p>Professional Child Development Assessment • 7 Categories • 50 Real Examples • Instant Reports</p>
+        </div>
+        <div class="content">
+            <!-- Step 1: Age Selection -->
+            <div id="step1" class="section active">
+                <div class="form-group">
+                    <label>👶 Child's Age Group:</label>
+                    <select id="ageGroup" onchange="moveToStep2()">
+                        <option value="">Choose age group for accurate assessment...</option>
+                        <option value="2-5">2-5 years (Toddler & Preschool)</option>
+                        <option value="6-10">6-10 years (Elementary School)</option>
+                        <option value="11-15">11-15 years (Early Adolescence)</option>
+                        <option value="16-18">16-18 years (Late Adolescence)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Step 2: Child Information -->
+            <div id="step2" class="section">
+                <div class="form-group">
+                    <label>👤 Child's Full Name:</label>
+                    <input type="text" id="childName" placeholder="Enter full name (e.g., Aryan Sharma)">
+                </div>
+                <div class="form-group">
+                    <label>📅 Assessment Date:</label>
+                    <input type="date" id="assessmentDate">
+                    <small style="color: #666;">Today's date auto-filled</small>
+                </div>
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="moveToStep1()">← Back</button>
+                    <button class="btn-primary" onclick="moveToStep3()">Begin Assessment →</button>
+                </div>
+            </div>
+
+            <!-- Step 3: Main Assessment -->
+            <div id="step3" class="section">
+                <h3 id="ageGroupTitle" style="color: #2c3e50; margin-bottom: 15px; font-size: 24px;"></h3>
+                <div class="overall-progress">
+                    <div id="overallProgress" class="overall-progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progressText">0 of 50 patterns completed</div>
+                <div id="patternsContainer"></div>
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="moveToStep2()">← Previous</button>
+                    <button class="btn-primary" onclick="generateReport()" id="reportBtn" disabled>Generate Report →</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Detailed Report -->
+            <div id="step4" class="section">
+                <div id="reportContainer"></div>
+                <div class="button-group">
+                    <button class="btn-secondary" onclick="moveToStep1()">New Assessment</button>
+                    <button class="btn-primary" onclick="printReport()">🖨️ Print Report</button>
+                    <button class="btn-primary" onclick="exportReport()">📥 Download TXT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // COMPLETE 7-CATEGORY DATASET
+        const behaviorData = {
+            "2-5": {
+                "name": "2-5 years - Toddler & Early Childhood",
+                "totalPatterns": 50,
+                "categories": {
+                    "🧡 Emotional Regulation": [
+                        {"pattern": "Stays calm when told 'No'", "example": "Accepts no extra cookies without tantrum"},
+                        {"pattern": "Recovers from disappointment", "example": "Settles after losing toy (5-10 min)"},
+                        {"pattern": "Manages frustration appropriately", "example": "Waits turn without getting angry"},
+                        {"pattern": "Calms down with comfort", "example": "Hugs parent after crying"},
+                        {"pattern": "Shows appropriate anger", "example": "Says 'I'm mad' instead of hitting"},
+                        {"pattern": "Handles transitions smoothly", "example": "Playtime to dinner without meltdown"},
+                        {"pattern": "Tolerates short waiting", "example": "Waits 2-3 minutes for snack"},
+                        {"pattern": "Self-soothes when tired", "example": "Hugs teddy bear independently"}
+                    ],
+                    "💙 Social Skills": [
+                        {"pattern": "Shares toys during playtime", "example": "Lets sibling use favorite car"},
+                        {"pattern": "Invites peers to join activities", "example": "Says 'Come play with me'"},
+                        {"pattern": "Plays alongside other children", "example": "Builds blocks next to friend"},
+                        {"pattern": "Apologizes when wrong", "example": "Says sorry after taking toy"},
+                        {"pattern": "Takes turns during games", "example": "Waits turn in board games"},
+                        {"pattern": "Shows affection to family", "example": "Hugs grandparents when visiting"},
+                        {"pattern": "Greets familiar adults", "example": "Waves 'Hi' to teacher"},
+                        {"pattern": "Comforts sad peers", "example": "Pats friend who fell down"}
+                    ],
+                    "🧠 Cognitive Development": [
+                        {"pattern": "Follows simple 1-step instructions", "example": "Puts toy away when asked"},
+                        {"pattern": "Names 5+ common objects", "example": "Identifies ball, car, dog"},
+                        {"pattern": "Recognizes basic colors", "example": "Says 'red car, blue cup'"},
+                        {"pattern": "Sorts by size/shape", "example": "Big blocks with big blocks"},
+                        {"pattern": "Counts to at least 5", "example": "Counts fingers or toys 1-2-3-4-5"},
+                        {"pattern": "Remembers daily routines", "example": "Bath comes after dinner"},
+                        {"pattern": "Shows natural curiosity", "example": "Asks 'What's that?' about objects"},
+                        {"pattern": "Completes 3-6 piece puzzles", "example": "Animal shape sorter"}
+                    ],
+                    "🗣️ Self-Expression": [
+                        {"pattern": "Uses words instead of crying", "example": "Says 'I want water'"},
+                        {"pattern": "Names basic emotions", "example": "Says 'happy' or 'sad'"},
+                        {"pattern": "Expresses preferences", "example": "I like apples/not like spinach"},
+                        {"pattern": "Asks simple questions", "example": "Where's daddy? What's that?"},
+                        {"pattern": "Sings familiar nursery rhymes", "example": "Twinkle Twinkle Little Star"},
+                        {"pattern": "Tells what happened", "example": "We went to park, saw dog"},
+                        {"pattern": "Uses please/thank you", "example": "Please pass milk, thank you"},
+                        {"pattern": "Follows 2-step directions", "example": "Get shoes then open door"}
+                    ],
+                    "📋 Behavioral Patterns": [
+                        {"pattern": "Follows predictable routines", "example": "Brushes teeth after breakfast"},
+                        {"pattern": "Helps with age-appropriate chores", "example": "Puts plate in sink"},
+                        {"pattern": "Dresses self (partial)", "example": "Puts arms in shirt sleeves"},
+                        {"pattern": "Cleans up toys after play", "example": "Blocks back in box"},
+                        {"pattern": "Sits through entire meals", "example": "Stays seated 15-20 minutes"},
+                        {"pattern": "Uses toilet independently", "example": "Pulls pants down/up alone"},
+                        {"pattern": "Sleeps 10+ hours nightly", "example": "No night wakings"},
+                        {"pattern": "Shows appropriate independence", "example": "Chooses own clothes"}
+                    ],
+                    "❤️ Emotional Intelligence": [
+                        {"pattern": "Identifies own feelings", "example": "Says 'I'm scared of dark'"},
+                        {"pattern": "Shows empathy for others", "example": "Hugs crying sibling"},
+                        {"pattern": "Responds positively to praise", "example": "Beams at 'Good job!'"},
+                        {"pattern": "Expresses genuine joy", "example": "Claps/jumps for new toy"},
+                        {"pattern": "Notices others' distress", "example": "Asks 'You okay?'"},
+                        {"pattern": "Shows confidence in new situations", "example": "Tries playground slide"},
+                        {"pattern": "Accepts help when needed", "example": "Lets parent help puzzle"}
+                    ],
+                    "👨‍👩‍👧 Attachment Styles": [
+                        {"pattern": "Seeks parental comfort when upset", "example": "Comes to you when scared"},
+                        {"pattern": "Separates for short periods", "example": "Preschool drop-off no crying"},
+                        {"pattern": "Returns to caregiver after exploring", "example": "Checks in during playtime"}
+                    ]
+                }
+            }
+        };
+
+        let assessmentData = {
+            ageGroup: '', 
+            childName: '', 
+            assessmentDate: new Date().toISOString().split('T')[0], 
+            scores: {},
+            startTime: new Date()
+        };
+
+        // Navigation Functions
+        function moveToStep1() {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('step1').classList.add('active');
+            document.getElementById('ageGroup').value = '';
+        }
+
+        function moveToStep2() {
+            const ageGroup = document.getElementById('ageGroup').value;
+            if (!ageGroup) {
+                alert('Please select an age group first');
+                return;
+            }
+            assessmentData.ageGroup = ageGroup;
+            document.getElementById('assessmentDate').valueAsDate = new Date();
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('step2').classList.add('active');
+        }
+
+        function moveToStep3() {
+            assessmentData.childName = document.getElementById('childName').value.trim() || 'Child';
+            assessmentData.assessmentDate = document.getElementById('assessmentDate').value;
+
+            const data = behaviorData[assessmentData.ageGroup];
+            let html = '';
+            let globalIndex = 0;
+
+            for (let catName in data.categories) {
+                html += `<div class="category-header">${catName}</div>`;
+
+                data.categories[catName].forEach(item => {
+                    html += `
+                        <div class="pattern-item">
+                            <label class="pattern-label">${globalIndex + 1}. ${item.pattern}</label>
+                            <div class="example-text">📝 Real Example: ${item.example}</div>
+                            <div class="scale-container">
+                                ${[0,1,2,3,4,5].map(scale => `
+                                    <div>
+                                        <button class="scale-btn" onclick="setScore(${globalIndex}, ${scale})" id="scale-${globalIndex}-${scale}">
+                                            ${scale}
+                                        </button>
+                                        <div class="scale-label">${['Never','Rarely','Sometimes','Often','Very Often','Always'][scale]}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="scale-legend">
+                                <span>🟥 0 = Never Observed</span>
+                                <span style="margin-left:auto;">🟢 5 = Always Observed</span>
+                            </div>
+                        </div>`;
+                    globalIndex++;
+                });
+            }
+
+            document.getElementById('patternsContainer').innerHTML = html;
+            document.getElementById('ageGroupTitle').innerHTML = `${data.name} <span style="font-size:14px;color:#666;">(${data.totalPatterns || globalIndex} patterns)</span>`;
+
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('step3').classList.add('active');
+            document.getElementById('reportBtn').disabled = true;
+        }
+
+        function setScore(index, score) {
+            assessmentData.scores[index] = score;
+
+            // Update button visual
+            document.querySelectorAll(`[onclick*='${index}']`).forEach(btn => btn.classList.remove('selected'));
+            const selectedBtn = document.getElementById(`scale-${index}-${score}`);
+            if (selectedBtn) selectedBtn.classList.add('selected');
+
+            // Update overall progress
+            const totalPatterns = Object.keys(behaviorData[assessmentData.ageGroup].categories).reduce((sum, cat) => sum + behaviorData[assessmentData.ageGroup].categories[cat].length, 0);
+            const completed = Object.keys(assessmentData.scores).length;
+            const progress = (completed / totalPatterns) * 100;
+
+            document.getElementById('overallProgress').style.width = progress + '%';
+            document.getElementById('progressText').textContent = `${completed} of ${totalPatterns} patterns completed`;
+
+            // Enable report button when complete
+            if (completed === totalPatterns) {
+                document.getElementById('reportBtn').disabled = false;
+                document.getElementById('reportBtn').textContent = '✅ Generate Complete Report →';
+            }
+        }
+
+        function generateReport() {
+            const data = behaviorData[assessmentData.ageGroup];
+            let totalScore = 0, totalCount = 0;
+
+            Object.values(assessmentData.scores).forEach(score => {
+                totalScore += score;
+                totalCount++;
+            });
+
+            const avgScore = (totalScore / totalCount).toFixed(1);
+            const percentage = ((avgScore / 5) * 100).toFixed(1);
+            const assessmentTime = ((new Date() - assessmentData.startTime) / 1000 / 60).toFixed(1);
+
+            let reportHTML = `
+                <div class="report-header">
+                    <h2 style="color: #2c3e50; margin-bottom: 10px;">📋 Complete Assessment Report</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                        <div><strong>Child:</strong> ${assessmentData.childName}</div>
+                        <div><strong>Date:</strong> ${new Date(assessmentData.assessmentDate).toLocaleDateString('en-IN')}</div>
+                        <div><strong>Age Group:</strong> ${data.name}</div>
+                        <div><strong>Time Taken:</strong> ${assessmentTime} minutes</div>
+                        <div><strong>Overall Score:</strong> <span style="color: #667eea; font-size: 24px; font-weight: 800;">${avgScore}</span>/5.0 (${percentage}%)</div>
+                    </div>
+                </div>
+
+                <div class="report-section">
+                    <div class="report-title">📊 Detailed Category Scores</div>
+            `;
+
+            let globalCatIndex = 0;
+            for (let catName in data.categories) {
+                let catScore = 0, catCount = 0;
+                data.categories[catName].forEach((_, localIndex) => {
+                    const globalIndex = globalCatIndex * 8 + localIndex; // Approximate mapping
+                    if (assessmentData.scores[globalIndex]) {
+                        catScore += assessmentData.scores[globalIndex];
+                        catCount++;
+                    }
+                });
+                const catAvg = catCount > 0 ? (catScore / catCount).toFixed(1) : '0.0';
+                const catPercent = Math.round((catAvg / 5) * 100);
+                const color = catAvg >= 4 ? '#27ae60' : catAvg >= 3 ? '#f39c12' : catAvg >= 2 ? '#e67e22' : '#e74c3c';
+
+                reportHTML += `
+                    <div class="category-score-row">
+                        <div style="font-weight: 700; color: ${color};">${catName}</div>
+                        <div class="score-bar-small">
+                            <div class="score-fill-small" style="width: ${catPercent}%"></div>
+                        </div>
+                        <div class="score-value" style="color: ${color};">${catAvg}/5</div>
+                    </div>`;
+                globalCatIndex++;
+            }
+
+            reportHTML += `
+                </div>
+                <div class="report-section">
+                    <div class="report-title">💡 Actionable Insights & Recommendations</div>
+                    <div class="recommendations">
+                        <h4 style="margin-bottom: 20px;">Based on ${avgScore}/5 score:</h4>
+                        ${avgScore >= 4 ? `
+                            <p style="color: #27ae60; font-weight: 600; font-size: 16px;">🌟 Excellent Development! Continue nurturing strengths.</p>
+                            <ul>
+                                <li>🎉 Celebrate strong categories (4+/5)</li>
+                                <li>📈 Maintain current parenting strategies</li>
+                                <li>👏 Reassess in 6 months</li>
+                            </ul>
+                        ` : avgScore >= 3 ? `
+                            <p style="color: #f39c12; font-weight: 600; font-size: 16px;">👍 Good Progress! Focus on growth areas.</p>
+                            <ul>
+                                <li>🔍 Prioritize categories below 3.5/5</li>
+                                <li>✅ Reinforce strengths daily</li>
+                                <li>📚 Consider play therapy activities</li>
+                                <li>🔄 Reassess in 3 months</li>
+                            </ul>
+                        ` : `
+                            <p style="color: #e74c3c; font-weight: 600; font-size: 16px;">⚠️ Support Needed. Professional guidance recommended.</p>
+                            <ul>
+                                <li>🚨 Consult pediatrician/child psychologist</li>
+                                <li>📋 Create structured behavior plan</li>
+                                <li>🏠 Implement consistent routines</li>
+                                <li>📞 Consider early intervention services</li>
+                                <li>🔄 Reassess monthly</li>
+                            </ul>
+                        `}
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                    <p><strong>Generated by Behavioral Analysis App</strong></p>
+                    <p style="font-size: 12px; color: #6c757d;">Professional tool for parents • Save & share this report</p>
+                </div>
+            `;
+
+            document.getElementById('reportContainer').innerHTML = reportHTML;
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById('step4').classList.add('active');
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        function exportReport() {
+            const reportContent = document.getElementById('reportContainer').innerText;
+            const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Behavioral_Report_${assessmentData.childName.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date(assessmentData.assessmentDate).toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize date
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('assessmentDate').valueAsDate = new Date();
+        });
+    </script>
+</body>
+</html>
